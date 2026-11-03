@@ -2,10 +2,34 @@ WC.Player=class extends WC.Actor{
  constructor(x,y){super(x,y,WC.CONFIG.player.speed);this.name='player'}
  spd(){return this.abn||this.fast?WC.CONFIG.fall.speed:this.speed}
  update(dt,g){const L=g.level,mid=L.ladder(this.x,this.y-1)&&L.ladder(this.x,this.y+1),wasAbn=this.abn;
+  const k=g.keys;
   // 画面奥(立っているマス)を殴る。梯子の途中では振れない。
-  if(g.keys.hit&&this.t>=1&&this.busy<=0&&this.stun<=0&&!this.abn&&!mid){
+  if(k.hit&&this.t>=1&&this.busy<=0&&this.stun<=0&&!this.abn&&!mid){
    this.busy=WC.CONFIG.player.hammerTime;g.hit(this.x,this.y,this)}
-  super.update(dt,g);
+  
+  // 移動中の細かい制御（停止・反転）
+  if(this.t > 0 && this.t < 1 && !this.abn && this.busy <= 0 && this.stun <= 0){
+   const dx = (k.right?1:0)-(k.left?1:0), dy = (k.down?1:0)-(k.up?1:0);
+   let dirX = this.tx - this.x;
+   if(Math.abs(dirX) > 1) dirX = dirX > 0 ? -1 : 1; // 左右ループを考慮
+   const movingX = dirX !== 0, movingY = (this.ty - this.y) !== 0;
+
+   if((movingX && dx === -dirX) || (movingY && dy === -Math.sign(this.ty - this.y))){
+    // 逆方向のキーを押した場合は即座に反転
+    const ox = this.tx, oy = this.ty;
+    this.tx = this.x; this.ty = this.y;
+    this.x = ox; this.y = oy;
+    this.t = 1 - this.t;
+    super.update(dt,g);
+   } else if((movingX && dx === 0) || (movingY && dy === 0)){
+    // キーを離した場合は t を進めない（その場で止まる）
+   } else {
+    super.update(dt,g);
+   }
+  } else {
+   super.update(dt,g);
+  }
+
   // プレイヤーは異常落下の着地後にスタンしない。
   if(wasAbn&&!this.abn&&this.stun>0)this.stun=0
  }
@@ -15,5 +39,7 @@ WC.Player=class extends WC.Actor{
   if(dx&&L.canStep(this.x,this.y,dx,0))return[dx,0];
   return null}
  trap(){}
- paint(c,s,px,py){super.paint(c,s,px,py);if(this.busy>0){c.fillStyle='#ccc';c.fillRect((px+this.dir*.5+.3)*s,(py+.1)*s,s*.4,s*.3)}}
+ paint(c,px,py){super.paint(c,px,py);if(this.busy>0){
+  const tw=WC.CONFIG.tileW, th=WC.CONFIG.tileH;
+  c.fillStyle='#ccc';c.fillRect((px+this.dir*.5+.3)*tw,(py+.1)*th,tw*.4,th*.3)}}
 };
