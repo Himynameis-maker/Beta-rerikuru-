@@ -1,19 +1,32 @@
 (()=>{
+ // URLの末尾に ?dev があるかチェック
+ const isDev = location.search.includes('dev');
+ 
  const $=id=>document.getElementById(id),cv=$('cv'),c=cv.getContext('2d'),E=WC.Editor,K={};
  const KEYS={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',Space:'hit',KeyZ:'hit'};
  let G=null,mode='title',testing=false,last=0,mt;
  const msg=t=>{$('msg').textContent=t;clearTimeout(mt);mt=setTimeout(()=>$('msg').textContent='',2000)};
+ 
  // キャンバスを残り領域にアスペクト比維持でフィット(ページはスクロールさせない)
  function fit(){const s=$('stage'),k=Math.min(s.clientWidth/cv.width,s.clientHeight/cv.height);cv.style.width=Math.floor(cv.width*k)+'px';cv.style.height=Math.floor(cv.height*k)+'px'}
  WC.onFit=fit;addEventListener('resize',fit);
+ 
  // ボタン全体へのpointerdown preventDefaultはクリックを妨げるため設定しない。
  function setMode(m){mode=m;document.body.className=m;
   if(m=='title'){G=null;cv.width=640;cv.height=480;c.fillStyle='#000';c.fillRect(0,0,640,480)}
   if(m=='edit'){G=null;sizes();E.render(c)}
   fit()}
+  
+ // ?dev がない時は設定ボタンを隠す
+ if(!isDev) {
+  $('bParam').style.display = 'none';
+  $('bCode').style.display = 'none';
+ }
+
  function play(text,test){testing=test;G=new WC.Game(text);G.keys=K;
   const back=()=>setMode(test?'edit':'title');G.onOver=back;if(test)G.onClear=back;
-  cv.width=G.level.w*WC.CONFIG.tile;cv.height=G.level.h*WC.CONFIG.tile;setMode('play')}
+  // キャンバスのサイズ計算に tileW と tileH を使用
+  cv.width=G.level.w*WC.CONFIG.tileW;cv.height=G.level.h*WC.CONFIG.tileH;setMode('play')}
  function sizes(){$('cw').value=E.grid[0].length;$('ch').value=E.grid.length}
  const sheet=$('sheet'),open=s=>{sheet.dataset.s=s;sheet.hidden=false;if(s=='code')$('lv').value=E.text()};
  E.load(WC.Levels.sample);E.palette($('palette'));E.bind(cv,c);WC.Params.build($('pbody'));
