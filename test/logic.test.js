@@ -85,8 +85,10 @@ test('左右ループ: 連続して動く/またいで当たる/火の玉はル�
  for(let i=0;i<60;i++){g.update(1/60);const rx=g.player.rx;minRx=Math.min(minRx,rx);
   if(prev!=null){let d=Math.abs(rx-prev);d=Math.min(d,g.level.w-d);maxJump=Math.max(maxJump,d)}prev=rx}
  ok(minRx<=-.5,'端の外(rx<0)まで連続して動く');ok(maxJump<.2,'1フレームの移動が小さい(ワープしない)');
- const ch=new WC.Enemies['1'](9,2);g.player.rx=-.4;ch.rx=9;ok(g.near(g.player,ch)<.65,'端をまたいで接触判定');
- const fb=new WC.Fireball(0,2,1);fb.rx=-.3;g.player.rx=9;ok(g.near(fb,g.player)>.65,'火の玉はループしない');
+ const ch=new WC.Enemies['1'](9,2);g.player.rx=-.4;ch.rx=9;
+ ok(g.intersect(g.player,ch),'端をまたいで接触判定');
+ const fb=new WC.Fireball(0,2,1);fb.rx=-.3;g.player.rx=9;
+ ok(!g.intersect(fb,g.player),'火の玉はループしない');
 });
 test('追尾敵: 有効な梯子がない時はプレイヤー方向に関係なく現在の向きを維持する',()=>{
  for(const Enemy of [WC.Enemies['1'],WC.Enemies['3']]){
