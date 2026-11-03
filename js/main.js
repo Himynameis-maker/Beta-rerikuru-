@@ -1,0 +1,46 @@
+(()=>{
+ const $=id=>document.getElementById(id),cv=$('cv'),c=cv.getContext('2d'),E=WC.Editor,K={};
+ const KEYS={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',Space:'hit',KeyZ:'hit'};
+ let G=null,mode='title',testing=false,last=0,mt;
+ const msg=t=>{$('msg').textContent=t;clearTimeout(mt);mt=setTimeout(()=>$('msg').textContent='',2000)};
+ // キャンバスを残り領域にアスペクト比維持でフィット(ページはスクロールさせない)
+ function fit(){const s=$('stage'),k=Math.min(s.clientWidth/cv.width,s.clientHeight/cv.height);cv.style.width=Math.floor(cv.width*k)+'px';cv.style.height=Math.floor(cv.height*k)+'px'}
+ WC.onFit=fit;addEventListener('resize',fit);
+ // ボタン全体へのpointerdown preventDefaultはクリックを妨げるため設定しない。
+ function setMode(m){mode=m;document.body.className=m;
+  if(m=='title'){G=null;cv.width=640;cv.height=480;c.fillStyle='#000';c.fillRect(0,0,640,480)}
+  if(m=='edit'){G=null;sizes();E.render(c)}
+  fit()}
+ function play(text,test){testing=test;G=new WC.Game(text);G.keys=K;
+  const back=()=>setMode(test?'edit':'title');G.onOver=back;if(test)G.onClear=back;
+  cv.width=G.level.w*WC.CONFIG.tile;cv.height=G.level.h*WC.CONFIG.tile;setMode('play')}
+ function sizes(){$('cw').value=E.grid[0].length;$('ch').value=E.grid.length}
+ const sheet=$('sheet'),open=s=>{sheet.dataset.s=s;sheet.hidden=false;if(s=='code')$('lv').value=E.text()};
+ E.load(WC.Levels.sample);E.palette($('palette'));E.bind(cv,c);WC.Params.build($('pbody'));
+ document.querySelectorAll('[data-runner-dir]').forEach(b=>b.onclick=()=>E.setRunnerDir(+b.dataset.runnerDir));E.setRunnerDir(E.runnerDir);
+ $('bPlay').onclick=()=>play(E.text(),false);
+ $('bEdit').onclick=()=>setMode('edit');
+ $('bBack').onclick=()=>setMode(mode=='play'&&testing?'edit':'title');
+ $('bTest').onclick=()=>E.text().includes('P')?play(E.text(),true):msg('プレイヤー(P)を置いてね');
+ $('bClear').onclick=()=>{E.grid.forEach(r=>r.fill(' '));E.render(c)};
+ $('cw').onchange=$('ch').onchange=()=>{E.resize(Math.min(40,Math.max(8,+$('cw').value||20)),Math.min(30,Math.max(6,+$('ch').value||15)));sizes();E.render(c);fit()};
+ $('bSave').onclick=()=>{try{localStorage.setItem('wc1',JSON.stringify({level:E.text(),cfg:WC.CONFIG,runnerDir:E.runnerDir}));msg('保存した')}catch(e){msg('保存できない環境。コードをコピーしてね')}};
+ $('bLoad').onclick=()=>{try{const d=JSON.parse(localStorage.getItem('wc1'));E.load(d.level);WC.merge(WC.CONFIG,d.cfg);E.setRunnerDir(d.runnerDir===-1?-1:1);WC.Params.build($('pbody'));sizes();E.render(c);fit();msg('読み込んだ')}catch(e){msg('保存データなし')}};
+ $('bParam').onclick=()=>open('param');$('bCode').onclick=()=>open('code');$('sClose').onclick=()=>sheet.hidden=true;
+ $('pReset').onclick=()=>{WC.Params.reset();WC.Params.build($('pbody'))};
+ $('lvLoad').onclick=()=>{if($('lv').value.trim()){E.load($('lv').value);sizes();E.render(c);fit();sheet.hidden=true;msg('読み込んだ')}};
+ addEventListener('keydown',e=>{const k=KEYS[e.code];if(k&&mode=='play'&&document.activeElement.tagName!='TEXTAREA'){K[k]=true;e.preventDefault()}});
+ addEventListener('keyup',e=>{const k=KEYS[e.code];if(k)K[k]=false});
+ // タッチ操作: 十字パッドは指のスライドで方向が変わる
+ const dp=$('dpad'),dir=e=>{const r=dp.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5,h=Math.abs(x)>Math.abs(y);
+  K.left=h&&x<-.1;K.right=h&&x>.1;K.up=!h&&y<-.1;K.down=!h&&y>.1};
+ dp.onpointerdown=e=>{dp.setPointerCapture(e.pointerId);dir(e);e.preventDefault()};
+ dp.onpointermove=e=>{if(e.buttons)dir(e)};
+ dp.onpointerup=dp.onpointercancel=()=>{K.left=K.right=K.up=K.down=false};
+ const hb=$('hbtn');hb.onpointerdown=e=>{K.hit=true;e.preventDefault()};hb.onpointerup=hb.onpointercancel=hb.onpointerleave=()=>{K.hit=false};
+ (function loop(t){requestAnimationFrame(loop); // 先に次フレームを予約(途中で例外が出てもループが止まらないように)
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;const g=G;
+  if(mode=='play'&&g){g.update(dt);if(G===g)g.draw(c)} // update中のコールバックで G=null になる(ゲームオーバー/クリア)ので描画前に確認
+ })(0);
+ setMode('title');
+})();

@@ -1,0 +1,16 @@
+WC.Levels.sample=[
+"                    ",
+"                    ",
+"=WW==L=====H==L=Ww==",
+"     L     H  L     ",
+"     L O   H  L     ",
+"=V=L=L=IBHDH==L=LwV=",
+"   L     H      L   ",
+"   L     H      L   ",
+"=P=LW=L=O=H==L2BWLwH=",
+"      L     L     H ",
+"      L     L     H ",
+"==LV=OL=DH=WL=1LW=H=",
+"  L      H     L    ",
+"  L      H     L    ",
+"==L==V==BH==3=wL==4="].join('\n');
