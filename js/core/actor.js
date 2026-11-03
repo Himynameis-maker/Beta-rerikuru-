@@ -20,8 +20,12 @@ WC.Actor=class{
   if(!L.standable(this.x,this.y,this.bg)&&this.y<L.h-1){this.go(this.x,this.y+1,true);return}
   const d=this.decide(g);if(d)this.go(L.wrap(this.x+d[0]),this.y+d[1])}
  // 左右端をまたぐとき、はみ出した半身を反対側の端にも描く(シームレスなループ)
- draw(c,s){if(this.hidden)return;const W=c.canvas.width/s;c.globalAlpha=this.stun>0?.5:1;
-  for(const o of this.nowrap?[0]:[0,-W,W]){const px=this.rx+o;if(px>-1&&px<W)this.paint(c,s,px,this.ry)}
+ draw(c){if(this.hidden)return;
+  const tw=WC.CONFIG.tileW, th=WC.CONFIG.tileH;
+  const W=c.canvas.width/tw;c.globalAlpha=this.stun>0?.5:1;
+  for(const o of this.nowrap?[0]:[0,-W,W]){const px=this.rx+o;if(px>-1&&px<W)this.paint(c,px,this.ry)}
   c.globalAlpha=1}
- paint(c,s,px,py){WC.Gfx.draw(this.name,c,px*s,py*s,s,this)}
+ paint(c,px,py){
+  const tw=WC.CONFIG.tileW, th=WC.CONFIG.tileH;
+  WC.Gfx.draw(this.name,c,px*tw,py*th,this)}
 };
