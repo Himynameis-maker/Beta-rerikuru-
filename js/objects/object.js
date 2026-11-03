@@ -14,7 +14,12 @@ WC.Load=class extends WC.Obj{
   if(this.st==1){this.t-=dt;if(this.t>0)return;this.st=2;this.blocks=false;this.ty=this.groundY(L)}
   if(this.st!=2)return;
   this.fy=Math.min(this.ty,this.fy+WC.CONFIG.drum.fallSpeed*dt);
-  g.actors().forEach(a=>{if((a.x==this.x||(a.t<1&&a.tx==this.x))&&Math.abs(a.ry-this.fy)<.7)this.crush(g,a)});
+  // 落下ドラム缶の下敷き判定も矩形に
+  g.actors().forEach(a=>{
+   let dx = Math.abs(a.rx - this.x);
+   if(dx > L.w / 2) dx = L.w - dx;
+   if(dx < (WC.CONFIG.hitbox.w || 0.7) && Math.abs(a.ry - this.fy) < (WC.CONFIG.hitbox.h || 0.8)) this.crush(g,a)
+  });
   if(this.fy<this.ty)return;
   L.del(this.x,this.y);
   if(L.get(this.x,this.ty)){this.st=4;return}
