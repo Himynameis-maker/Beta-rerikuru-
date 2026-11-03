@@ -18,17 +18,17 @@ WC.Editor={
  palette(root){WC.TOOLS.forEach(t=>{const b=document.createElement('button');
    b.innerHTML='<canvas width="36" height="36"></canvas><br>'+t.n;
    const c=b.firstChild.getContext('2d');c.fillStyle='#000';c.fillRect(0,0,36,36);
-   if(t.k)WC.Gfx.draw(t.k,c,0,0,36,t.s||{});else{c.fillStyle='#f66';c.font='24px sans-serif';c.fillText('✕',8,27)}
+   if(t.k)WC.Gfx.draw(t.k,c,0,0,t.s||{});else{c.fillStyle='#f66';c.font='24px sans-serif';c.fillText('✕',8,27)}
    b.onclick=()=>{this.tool=t.ch;root.querySelectorAll('button').forEach(o=>o.classList.remove('sel'));b.classList.add('sel')};
    root.appendChild(b)});root.firstChild.classList.add('sel')},
- render(c){const s=WC.CONFIG.tile,L=new WC.Level(this.text()),cv=c.canvas;
-  if(cv.width!=L.w*s||cv.height!=L.h*s){cv.width=L.w*s;cv.height=L.h*s}
+ render(c){const tw=WC.CONFIG.tileW, th=WC.CONFIG.tileH, L=new WC.Level(this.text()), cv=c.canvas;
+  if(cv.width!=L.w*tw||cv.height!=L.h*th){cv.width=L.w*tw;cv.height=L.h*th}
   c.fillStyle='#000';c.fillRect(0,0,cv.width,cv.height);
   c.strokeStyle='#222';c.beginPath();
-  for(let x=0;x<=L.w;x++){c.moveTo(x*s,0);c.lineTo(x*s,cv.height)}
-  for(let y=0;y<=L.h;y++){c.moveTo(0,y*s);c.lineTo(cv.width,y*s)}
-  c.stroke();WC.Gfx.terrain(c,L,s);
-  this.grid.forEach((r,y)=>r.forEach((ch,x)=>{const k=WC.SPR[ch];if(k)WC.Gfx.draw(k,c,x*s,y*s,s,{})}))},
+  for(let x=0;x<=L.w;x++){c.moveTo(x*tw,0);c.lineTo(x*tw,cv.height)}
+  for(let y=0;y<=L.h;y++){c.moveTo(0,y*th);c.lineTo(cv.width,y*th)}
+  c.stroke();WC.Gfx.terrain(c,L);
+  this.grid.forEach((r,y)=>r.forEach((ch,x)=>{const k=WC.SPR[ch];if(k)WC.Gfx.draw(k,c,x*tw,y*th,{})}))},
  bind(cv,c){let on=false;
   const at=e=>{const r=cv.getBoundingClientRect();
    this.paint(Math.floor((e.clientX-r.left)/r.width*this.grid[0].length),Math.floor((e.clientY-r.top)/r.height*this.grid.length));this.render(c)};
