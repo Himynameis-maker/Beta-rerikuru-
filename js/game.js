@@ -12,9 +12,18 @@ WC.Game=class{
   if(o&&o.onHit)o.onHit(this,by);
   // 親方は、爆弾以外の破壊対象がこの一振りで完全に消えた場合だけ異常落下する。
   const destroyed=!!o&&o.kind!=='bomb'&&(o.needsBreak||o.destructible||o.isLadder)&&this.level.get(x,y)!==o;
-  if(destroyed)this.enemies.forEach(e=>{if(!e.hidden&&e.y==y&&e.x==x&&e.onHammer)e.onHammer(this)});
+  if(destroyed)this.enemies.forEach(e=>{if(!e.hidden&&e.y==y&&e.x==x&&e.onHammer)e.onHammer(this)});}
+ 
+ // 新しい矩形(AABB)当たり判定
+ intersect(a,b){
+  const hw = (WC.CONFIG.hitbox.w || 0.7) / 2;
+  const hh = (WC.CONFIG.hitbox.h || 0.8) / 2;
+  let dx = Math.abs(a.rx - b.rx);
+  if(!a.nowrap && !b.nowrap) dx = Math.min(dx, this.level.w - dx);
+  const dy = Math.abs(a.ry - b.ry);
+  return dx < (hw * 2) && dy < (hh * 2);
  }
- near(a,b){let dx=Math.abs(a.rx-b.rx);if(!a.nowrap&&!b.nowrap)dx=Math.min(dx,this.level.w-dx);return Math.hypot(dx,a.ry-b.ry)} // 左右ループをまたいだ距離
+
  killPlayer(){if(this.state!='play')return;this.state='dead';WC.Sound.play('die');this.lives--;
   this.later(1.2,()=>{if(this.lives>0)this.load();else{this.state='over';this.later(1.5,()=>this.onOver&&this.onOver())}})}
  checkAllHidden(){const es=this.enemies.filter(e=>!e.noDoor&&!e.dead);
@@ -32,18 +41,21 @@ WC.Game=class{
   this.enemies.forEach(e=>e.update(dt,this));
   this.enemies=this.enemies.filter(e=>!e.dead);
   if(p.t>=1)this.enemies.forEach(e=>{if(e.hidden&&e.x==p.x&&e.y==p.y)e.exit(this)}); // 扉に触れると出てくる
-  for(const e of this.enemies)if(!e.hidden&&!e.harmless&&!e.abn&&e.stun<=0&&this.near(e,p)<.65){this.killPlayer();break}
+  
+  // 敵の接触判定を矩形(intersect)に切り替え
+  for(const e of this.enemies)if(!e.hidden&&!e.harmless&&!e.abn&&e.stun<=0&&this.intersect(e,p)){this.killPlayer();break}
+  
   this.fireT-=dt;
   if(this.fireT<=0){this.fireT=WC.CONFIG.enemies.fireball.interval;
    const ys=L.fireRows();
    if(ys.length){const left=Math.random()<.5;this.enemies.push(new WC.Fireball(left?0:L.w-1,ys[Math.random()*ys.length|0],left?1:-1))}}
   if(this.state=='play'&&![...L.objs.values()].some(o=>o.needsBreak)){this.state='clear';WC.Sound.play('clear');this.later(2,()=>this.onClear?this.onClear():this.load())}}
- draw(c){const s=WC.CONFIG.tile,L=this.level;
-  c.fillStyle='#000';c.fillRect(0,0,L.w*s,L.h*s);
-  WC.Gfx.terrain(c,L,s);
-  this.enemies.forEach(e=>e.draw(c,s));this.player.draw(c,s);
+ draw(c){const tw=WC.CONFIG.tileW, th=WC.CONFIG.tileH, L=this.level;
+  c.fillStyle='#000';c.fillRect(0,0,L.w*tw,L.h*th);
+  WC.Gfx.terrain(c,L);
+  this.enemies.forEach(e=>e.draw(c));this.player.draw(c);
   c.fillStyle='#fff';c.font='14px monospace';
   c.fillText(`LIVES ${this.lives}  LEFT ${[...L.objs.values()].filter(o=>o.needsBreak).length}`,6,14);
   const m={ready:'READY?',dead:'MISS',clear:'CLEAR!',over:'GAME OVER'}[this.state];
-  if(m){c.font='32px monospace';c.textAlign='center';c.fillText(m,L.w*s/2,L.h*s/2);c.textAlign='left'}}
+  if(m){c.font='32px monospace';c.textAlign='center';c.fillText(m,L.w*tw/2,L.h*th/2);c.textAlign='left'}}
 };
